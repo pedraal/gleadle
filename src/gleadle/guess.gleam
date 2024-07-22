@@ -104,6 +104,18 @@ fn refine_loop(
   answer: Answer,
   result: GuessResult,
 ) {
+  let return = fn(
+    letter: String,
+    letters: List(LetterGuess),
+    color_fn: fn(String) -> String,
+  ) {
+    refine_loop(
+      correct_dict,
+      ProcessedGuess(letters),
+      answer,
+      GuessResult(result.input <> letter, result.output <> color_fn(letter)),
+    )
+  }
   case guess.letters {
     [LetterGuess(letter, Misplaced), ..letters] -> {
       let correct_count =
@@ -114,49 +126,15 @@ fn refine_loop(
         |> result.unwrap(0)
 
       case correct_count == expected_count {
-        True ->
-          refine_loop(
-            correct_dict,
-            ProcessedGuess(letters),
-            answer,
-            GuessResult(
-              result.input <> letter,
-              result.output <> colored.red(letter),
-            ),
-          )
-        _ ->
-          refine_loop(
-            correct_dict,
-            ProcessedGuess(letters),
-            answer,
-            GuessResult(
-              result.input <> letter,
-              result.output <> colored.yellow(letter),
-            ),
-          )
+        True -> return(letter, letters, colored.red)
+        _ -> return(letter, letters, colored.yellow)
       }
     }
     [LetterGuess(letter, Correct), ..letters] -> {
-      refine_loop(
-        correct_dict,
-        ProcessedGuess(letters),
-        answer,
-        GuessResult(
-          result.input <> letter,
-          result.output <> colored.green(letter),
-        ),
-      )
+      return(letter, letters, colored.green)
     }
     [LetterGuess(letter, Wrong), ..letters] -> {
-      refine_loop(
-        correct_dict,
-        ProcessedGuess(letters),
-        answer,
-        GuessResult(
-          result.input <> letter,
-          result.output <> colored.red(letter),
-        ),
-      )
+      return(letter, letters, colored.red)
     }
     _ -> result
   }
