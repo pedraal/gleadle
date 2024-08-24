@@ -26,15 +26,18 @@ pub type ProcessedGuess {
 }
 
 pub type GuessResult {
-  GuessResult(input: String, output: String)
+  GuessResult(raw: String, colored: String)
 }
 
 pub fn start(word: String, max_attempts: Int) {
   let parsed_answer = answer_mod.parse_answer(word)
   let obfuscated_answer = parser.obfuscate_string(parsed_answer.string)
-  let initial_guess = GuessResult(obfuscated_answer, obfuscated_answer)
-
-  check_and_ask(initial_guess, parsed_answer, 0, max_attempts)
+  check_and_ask(
+    GuessResult(raw: obfuscated_answer, colored: obfuscated_answer),
+    parsed_answer,
+    0,
+    max_attempts,
+  )
 }
 
 pub fn check_and_ask(
@@ -52,7 +55,7 @@ pub fn check_and_ask(
 
   print(guess, spaces: print_spaces)
 
-  let is_correct = guess.input == answer.string
+  let is_correct = guess.raw == answer.string
   let is_over = attempt >= max_attempts
 
   case is_correct, is_over {
@@ -61,7 +64,7 @@ pub fn check_and_ask(
       io.print(output.padded_string("Game over :(", spaces: print_spaces))
     _, _ -> {
       erlang.get_line(prompt)
-      |> result.unwrap(guess.input)
+      |> result.unwrap(guess.raw)
       |> string.trim
       |> process(answer, ProcessedGuess([]))
       |> refine(answer, GuessResult("", ""))
@@ -113,7 +116,7 @@ fn refine_loop(
       correct_dict,
       ProcessedGuess(letters),
       answer,
-      GuessResult(result.input <> letter, result.output <> color_fn(letter)),
+      GuessResult(result.raw <> letter, result.colored <> color_fn(letter)),
     )
   }
   case guess.letters {
@@ -153,5 +156,5 @@ fn check_char(current: String, expected: String, possibilities) -> LetterGuess {
 }
 
 pub fn print(guess: GuessResult, spaces pad: Int) {
-  io.println(output.padded_string(guess.output, spaces: pad))
+  io.println(output.padded_string(guess.colored, spaces: pad))
 }
